@@ -1,0 +1,165 @@
+
+
+
+<div class="row sqs-row">
+    <div class="comment-form" id="comment-form" >
+        <div class="flex-d" >
+            <image src="<%= url %>" style="border-radius: 50%; height: 5rem;"/>
+            <p class="ncomment">James</p>
+        </div>
+
+        <div class="comment-body">
+            <input id="ctitle" style="width: 100%;" class="tcomment" type="text" placeholder="title" value="Mon"/>
+            <ul class="flex-d">
+                <li id="mbti-enable">MBTI
+                </li>
+                <li><select id="enneagram-list"></select></li>
+                <li>
+                    <select id="zodiac-list"></select>
+                </li>
+            </ul>
+            <textarea  id="mcomment" class="mcomment" style="width: 100%;" placeholder="Your comment" rows="4" value="Com"></textarea>
+        </div>
+        <span id="btn-Vote" class="" style="float: right;"><img src="../public/static/send.png" /></span>
+    </div>
+    <div id="comment-section" style="margin-top: 2rem;"></div>
+</div>
+
+
+<script>
+
+    const loader = '<div class="lds-facebook"><div></div><div></div><div></div></div>'
+    const node = (htmlString)=> document.createRange().createContextualFragment(htmlString);
+    const viewComment = ({id,title,comment,zodiac,mbti,enneagram,heart})=> { 
+        return `<div class="row sqs-row" style="padding-top:1rem;">
+                    <div class="comment-box" >
+                        <div class="flex-d" >
+                            <image src="<%= url %>" style="border-radius: 50%; height: 5rem;"/>
+                            <p class="ncomment">James</p>
+                        </div>
+
+                        <div class="comment-body">
+                            <h4 style="margin:1rem 0">${title}</h4>
+                            <ul class="flex-d viewc">
+                                ${mbti?`<li id="mbti-enable">${mbti}</li>`:''}
+                                ${enneagram?`<li id="enneagram-list">${enneagram}</li>`:''}
+                                ${zodiac?`<li id="zodiac-list">${zodiac}</li>`:''}
+                            </ul>
+                            <p style="margin:0">${comment}</p>
+                        </div>
+                        
+                        <p id="like-this" onclick="likeIt(this)" value="${id}"><image src="../public/static/like.png" />${heart}</p>
+                    </div>
+                </div>`
+    }
+
+    const insertComments = () => {
+        document.getElementById('comment-section').innerHTML = ''
+        commentList.map(c => document.getElementById('comment-section').innerHTML +=viewComment(c))
+        
+    }
+    const filterComments = (filteredComments=>{
+        document.getElementById('comment-section').innerHTML = ''
+        const sortedList = filteredComments.sort((a,b)=>b.id-a.id)
+        sortedList.map(c => document.getElementById('comment-section').innerHTML +=viewComment(c))
+    })
+    const sortComments = (sortBy=>{
+        document.getElementById('comment-section').innerHTML = ''
+        let sortedList = []
+        if (sortBy=='best') {
+            sortedList = commentList.sort((a,b)=>b.heart-a.heart)
+        }else{
+            sortedList = commentList.sort((a,b)=>b.id-a.id)
+        }
+        sortedList.map(c => document.getElementById('comment-section').innerHTML +=viewComment(c))
+    })
+
+    let commentList = []
+    let scomment = {}
+    let enneagramList = ['1:0','2:1','2:3','3:4','4:3','5:4','5:6']
+    const zodiacList = ['Aries', 'Taurus', 'Gemini', 'Cancer', 'Leo', 'Virgo', 'Libra', 'Scorpio', 'Sagittarius', 'Capricorn', 'Aquarius', 'Pisces']
+    if (commentList) {
+        insertComments()
+    }
+    const selections = (list,category)=>{
+        let optionList =`<option>${category}</option>\n` 
+        list.map(v=>{
+            optionList+=`<option value="${v}">${v}</option>\n`
+        })
+        return optionList
+    }
+
+    document.getElementById('zodiac-list').innerHTML = selections(zodiacList,'Zodiac')
+    document.getElementById('enneagram-list').innerHTML = selections(enneagramList,'Enneagram')
+
+    let egl='',zdc='',mbt='';
+    let like =0
+    document.getElementById('zodiac-list').addEventListener('change',(e)=>{egl= e.target.value})
+    document.getElementById('enneagram-list').addEventListener('change',(e)=>{zdc= e.target.value})
+    document.getElementById('mbti-enable').addEventListener('click',(e)=> {
+
+        if(e.target.innerText == 'INTP'){
+            e.target.innerText = 'MBTI'
+            mbt =''
+        }else{
+            e.target.innerText = 'INTP'
+            mbt ='INTP'
+        }
+        
+    })
+    const likeIt = (e)=> {
+        let newCommentList = commentList.find( (v) =>v.id==parseInt(e.getAttribute('value')))
+        newCommentList.heart+=1
+        insertComments()
+    }
+
+    let voteBtn = document.getElementById('btn-Vote')
+    voteBtn.addEventListener('click',(ev)=>{
+        document.getElementById('comment-section').prepend(node(loader))
+        scomment = {
+            id:commentList.length+1,
+            title:document.getElementById("ctitle").value,
+            comment:document.getElementById("mcomment").value,
+            enneagram: zdc,
+            zodiac:egl,
+            mbti:mbt,
+            heart:0
+        }
+        commentList = [...commentList,scomment]
+        scomment ={}
+        setTimeout(()=>{
+            insertComments()
+        },1500)
+        document.getElementById("ctitle").value = ''
+        document.getElementById("mcomment").value = ''
+        egl,zdc,mbt='';
+        
+    })
+
+    // Filters event handler
+    document.getElementById('selectAll').addEventListener('click',()=>{
+        insertComments()
+    })
+    document.getElementById('selectMBTI').addEventListener('click',()=>{
+        let mbtiComments = commentList.filter(v=> {return v?.mbti !=''})
+        filterComments(mbtiComments)
+    })
+    document.getElementById('selectENG').addEventListener('click',()=>{
+        let engComments = commentList.filter(v=> {return v?.enneagram !=''})
+        filterComments(engComments)
+    })
+    document.getElementById('selectZOD').addEventListener('click',()=>{
+        let zodComments = commentList.filter(v=> {return v?.zodiac !=''})
+        filterComments(zodComments)
+    })
+    document.getElementById('bestFilter').addEventListener('click',()=>{
+        sortComments('best')
+    })
+    document.getElementById('recentFilter').addEventListener('click',()=>{
+        sortComments('recent')
+    })
+
+
+
+
+</script>
